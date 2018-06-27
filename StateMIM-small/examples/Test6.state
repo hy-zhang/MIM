@@ -37,17 +37,17 @@ interface OfficeClerk extends Located, Employee {
   Int deskNumber() override OfficeClerk;
   OfficeClerk moveTo(OfficeClerk c) override OfficeClerk {
     return (
-      Point p = ((Located)c).position();
-      ((Located)this).SET_position(p);
+      Point p4 = ((Located)c).position();
+      ((Located)this).SET_position(p4);
       this.SET_deskNumber(c.deskNumber());
       this
     );
   }
 }
 
-OfficeClerk alice = OfficeClerk.of(Alice.of(), I27.of(), Manager.of(), I1.of(), (Point p = Point.of(I2.of(), I3.of());p));
-OfficeClerk bob = OfficeClerk.of(Bob.of(), I45.of(), Director.of(), I2.of(), (Point p = Point.of(I2.of(), I4.of());p));
-Title p = Officer.of();
+OfficeClerk alice = OfficeClerk.of(Alice.of(), I27.of(), Manager.of(), I1.of(), (Point p1 = Point.of(I2.of(), I3.of());p1));
+OfficeClerk bob = OfficeClerk.of(Bob.of(), I45.of(), Director.of(), I2.of(), (Point p2 = Point.of(I2.of(), I4.of());p2));
+Title p3 = Officer.of();
 OfficeClerk a2b = alice.moveTo(bob);
-((Employee)a2b).SET_position(p);
+((Employee)a2b).SET_position(p3);
 a2b
