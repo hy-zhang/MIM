@@ -53,6 +53,7 @@ object AST {
     def interfaceCheck(info: Info): Unit = {
       for (x <- sups) assert(info.table.contains(x), TypeNotFound(x))
       for (x <- methods) try x.methodCheck(info, name) catch {case error: Throwable => nextError(error, MethError(x))}
+      if (constr.isDefined) constr.get.constructorCheck(info, name)
       val collectMethods = info.collectMethods(name)
       val cond1 = !(collectMethods.exists(m => info.table.exists(j => info.subType(name, j) &&
           info.mtype(m, j).isDefined && info.mbody(m, name, j).isEmpty)))
@@ -68,14 +69,13 @@ object AST {
   
   case class Parameter(paramType: String, name: String)
   
-  case class Constructor(returnType: String, name: String, paras: List[Field]) {
+  case class Constructor(paras: List[Field]) {
     def constructorCheck(info: Info, thisType: String): Unit = {
-      assert(thisType == returnType, Message("Constructor of " + thisType + " has wrong type."))
       for (para <- paras) {
         assert(info.table.contains(para.fieldType), TypeNotFound(para.fieldType))
         assert(info.table.contains(para.path), TypeNotFound(para.path))
       }
-      assert(info.canInstantiate(this), Message("Invalid constructor of " + thisType + "."))
+      assert(info.canInstantiate(thisType, this), Message("Invalid constructor of " + thisType + "."))
     }
   }
   
@@ -128,21 +128,20 @@ object AST {
     def subst(x: String, v: Value) = Invk(e.subst(x, v), m, args.map(_.subst(x, v)))
   }
   
-  case class InvkStatic(t: String, m: String, args: List[Expr]) extends Expr {
+  case class InvkStatic(t: String, args: List[Expr]) extends Expr {
     def checkType(info: Info, env: Map[String, String]) = {
       assert(info.table.contains(t), TypeNotFound(t))
       val constr = info.constructorMap(t)
       assert(constr.isDefined, Message("Constructor of " + t + " undefined."))
-      assert(constr.get.name == m, Message("Constructor of " + t + " is " + constr.get.name + ", not " + m + "."))
-      assert(constr.get.paras.size == args.size, Message("Wrong arguments on invk of " + t + "." + m + "()."))
+      assert(constr.get.paras.size == args.size, Message("Wrong arguments on invk of " + t + "'s constructor."))
       for (i <- 0 to args.size - 1) {
         val argType = args(i).checkType(info, env)
         assert(info.subType(argType, constr.get.paras(i).fieldType),
-            Message("Wrong argument#" + (i + 1) + " type on invk of " + t + "." + m + "()."))
+            Message("Wrong argument#" + (i + 1) + " type on invk of " + t + "'s constructor."))
       }
       t
     }
-    def subst(x: String, v: Value) = InvkStatic(t, m, args.map(_.subst(x, v)))
+    def subst(x: String, v: Value) = InvkStatic(t, args.map(_.subst(x, v)))
   }
   
   case class AnnoExpr(i: String, e: Expr) extends Expr {

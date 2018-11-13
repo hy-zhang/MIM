@@ -40,14 +40,14 @@ object Semantics {
           Config(h, paramsMap.foldRight[Expr](returnExpr)((p1: (String, Value), p2: Expr) => p2.subst(p1._1, p1._2)))
         }
       }
-      case InvkStatic(t, m, args) => {
+      case InvkStatic(t, args) => {
         for (index <- 0 to args.length - 1) {
           if (!args(index).isValue)
-            return eval1(info, Config(h, args(index))).update(x => InvkStatic(t, m, args.updated(index, x)))
+            return eval1(info, Config(h, args(index))).update(x => InvkStatic(t, args.updated(index, x)))
         }
         val newObj = Obj(t, args.map(arg => arg match {case Value(_, id) => id}))
         val newHwithId = h.addObj(newObj)
-        Config(newHwithId._1, Value(t, newHwithId._2)) // I.m(vs)
+        Config(newHwithId._1, Value(t, newHwithId._2)) // new I(vs)
       }
       case AnnoExpr(i, Value(t, id)) => Config(h, Value(i, id))
       case AnnoExpr(i, e) => eval1(info, Config(h, e)).update(AnnoExpr(i, _))
@@ -55,7 +55,7 @@ object Semantics {
         val obj = h.lookup(o0).get
         val field = info.isField(obj.t, i0, fieldName).get
         val newH = h.update(o0, field._1, o1)
-        Config(newH, InvkStatic("Void", "of", List()))
+        Config(newH, InvkStatic("Void", List()))
       }
       case InvkSetter(e : Value, fieldName, para) => eval1(info, Config(h, para)).update(InvkSetter(e, fieldName, _))
       case InvkSetter(e, fieldName, para) => eval1(info, Config(h, e)).update(InvkSetter(_, fieldName, para))
